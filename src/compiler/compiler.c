@@ -1,0 +1,237 @@
+/*
+ * Generated with Saurus v 0.0.1
+ * http://www.saurus.org
+ */
+
+/* src/compiler/compiler.su */
+
+#include <saurus.h>
+
+static int ___saurus(su_state *s);
+
+
+#ifdef SU_OPT_C_LINE
+	#line 9 "src/compiler/compiler.su"
+#endif
+
+    #include <assert.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+
+    #include <lua.h>
+    #include <lualib.h>
+    #include <lauxlib.h>
+
+
+
+#ifdef SU_OPT_C_LINE
+	#line 20 "src/compiler/compiler.su"
+#endif
+
+    extern const char compiler_code[];
+
+    typedef struct {
+        char sign[4];
+        unsigned char maj;
+        unsigned char min;
+        unsigned short flags;
+    } header;
+
+    static int encode_int8(lua_State *L) {
+        char n = (char)lua_tointeger(L, -1);
+        lua_pushlstring(L, &n, 1);
+        return 1;
+    }
+
+    static int encode_int16(lua_State *L) {
+        short n = (short)lua_tointeger(L, -1);
+        lua_pushlstring(L, (char*)&n, 2);
+        return 1;
+    }
+
+    static int encode_int32(lua_State *L) {
+        int n = (int)lua_tointeger(L, -1);
+        lua_pushlstring(L, (char*)&n, 4);
+        return 1;
+    }
+
+    static int encode_uint8(lua_State *L) {
+        unsigned char n = (unsigned char)lua_tointeger(L, -1);
+        lua_pushlstring(L, (char*)&n, 1);
+        return 1;
+    }
+
+    static int encode_uint16(lua_State *L) {
+        unsigned short n = (unsigned short)lua_tointeger(L, -1);
+        lua_pushlstring(L, (char*)&n, 2);
+        return 1;
+    }
+
+    static int encode_uint32(lua_State *L) {
+        unsigned n = (unsigned)lua_tointeger(L, -1);
+        lua_pushlstring(L, (char*)&n, 4);
+        return 1;
+    }
+
+    static int encode_number(lua_State *L) {
+        double n = (double)lua_tonumber(L, -1);
+        lua_pushlstring(L, (char*)&n, 8);
+        return 1;
+    }
+
+    static int encode_header(lua_State *L) {
+        header h;
+        memcpy(h.sign, "\x1bsuc", 4);
+        h.maj = (unsigned char)lua_tointeger(L, -2);
+        h.min = (unsigned char)lua_tointeger(L, -1);
+        h.flags = 0;
+
+        assert(sizeof(header) == 8);
+        lua_pushlstring(L, (char*)&h, 8);
+        return 1;
+    }
+
+    static int encode_string(lua_State *L) {
+        size_t len;
+        char *mem;
+        const char *str;
+        unsigned size;
+
+        if (lua_isnil(L, -1)) {
+            lua_pushinteger(L, 0);
+            encode_uint32(L);
+            lua_remove(L, -2);
+            return 1;
+        }
+
+        str = lua_tostring(L, -1);
+        len = strlen(str);
+        size = len + sizeof(unsigned);
+        mem = (char*)malloc(size);
+
+        if (!mem) {
+            lua_pushstring(L, "Out of memory!");
+            lua_error(L);
+        }
+
+        memcpy(mem, &len, sizeof(unsigned));
+        memcpy(mem + sizeof(unsigned), str, len);
+        lua_pushlstring(L, mem, size);
+
+        free(mem);
+        return 1;
+    }
+
+    const luaL_Reg functions[] = {
+        {"header", encode_header},
+        {"string", encode_string},
+        {"number", encode_number},
+        {"int8", encode_int8},
+        {"int16", encode_int16},
+        {"int32", encode_int32},
+        {"uint8", encode_uint8},
+        {"uint16", encode_uint16},
+        {"uint32", encode_uint32},
+        {NULL, NULL}
+    };
+
+    int luaopen_writebin(lua_State *L) {
+        luaL_register(L, "writebin", functions);
+        return 1;
+    }
+
+    static char *dup(su_state *s, const char *str) {
+        char *tmp = (char*)su_allocate(s, NULL, strlen(str) + 1);
+        strcpy(tmp, str);
+        return tmp;
+    }
+
+
+
+#ifdef SU_OPT_C_LINE
+	#line 140 "src/compiler/compiler.su"
+#endif
+
+    int su_compile(su_state *s, const char *code, const char *name, char **inline_c, char **result, size_t *size) {
+        const char *tmp;
+        size_t buffer_size;
+        lua_State *L = lua_open();
+        su_state *sc = su_init(su_allocator(s));
+        su_libinit(sc);
+        ___saurus(sc);
+
+        luaL_openlibs(L);
+        luaopen_writebin(L);
+
+        if (luaL_loadstring(L, compiler_code)) {
+            *result = dup(s, lua_tostring(L, -1));
+            if (size) *size = strlen(*result);
+            lua_close(L);
+            su_close(sc);
+            return -1;
+        }
+
+        if (lua_pcall(L, 0, 0, 0)) {
+            lua_getglobal(L, "saurus_error");
+            if (lua_isnil(L, -1))
+                lua_pop(L, 1);
+            *result = dup(s, lua_tostring(L, -1));
+            if (size) *size = strlen(*result);
+            lua_close(L);
+            su_close(sc);
+            return -2;
+        }
+
+        lua_getglobal(L, "repl");
+        lua_pushstring(L, code);
+        lua_pushstring(L, name ? name : "?");
+        if (lua_pcall(L, 2, 1, 0)) {
+            lua_getglobal(L, "saurus_error");
+            if (lua_isnil(L, -1)) {
+                lua_pop(L, 1);
+                *result = dup(s, lua_tostring(L, -1));
+            } else {
+                *result = dup(s, lua_tostring(L, -1));
+            }
+            if (size) *size = strlen(*result);
+            lua_close(L);
+            su_close(sc);
+            return -3;
+        }
+
+        tmp = lua_tolstring(L, -1, &buffer_size);
+        *result = (char*)su_allocate(s, NULL, buffer_size);
+        memcpy(*result, tmp, buffer_size);
+        if (size) *size = buffer_size;
+
+        if (inline_c) {
+            lua_getglobal(L, "c_code");
+            if (lua_isnil(L, -1))
+                tmp = lua_tostring(L, -1);
+            *inline_c = (char*)su_allocate(s, NULL, strlen(tmp) + 1);
+            strcpy(*inline_c, tmp);
+        }
+
+        lua_close(L);
+        su_close(sc);
+        return 0;
+    }
+
+
+
+static int ___saurus(su_state *s) {
+	const char code[] = {
+		27,115,117,99,0,0,0,0,6,0,0,0,0,0,0,0,1,1,0,0,
+		0,0,0,0,1,1,0,0,0,0,0,0,21,0,0,0,1,0,0,0,
+		0,0,0,0,0,0,0,0,0,24,0,0,0,115,114,99,47,99,111,109,
+		112,105,108,101,114,47,99,111,109,112,105,108,101,114,46,115,117,6,0,0,
+		0,10,0,0,0,10,0,0,0,21,0,0,0,21,0,0,0,141,0,0,
+		0,1,0,0,0
+	};
+
+
+	if (su_load(s, NULL, (void*)code))
+		return -1;
+	return 0;
+}

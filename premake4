@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ "$(uname)" == "Darwin" ]; then
+    ./tools/premake4/premake4.osx $@
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    ./tools/premake4/premake4.lnx $@
+else
+    ./tools/premake4/premake4.exe $@
+fi

@@ -1,0 +1,118 @@
+def core = {
+    map = (x f) ->
+        t = type?(x)
+        if t == "vector" do
+            loop = (in i out f) ->
+                if i < sequence.length(in) do
+                    rec(in i + 1 sequence.push(out f(in(i))) f)
+                    ;
+                else
+                    out
+                ;
+
+            loop(x 0 [] f)
+            ;
+        else if t == "hashmap" do
+            loop = (in out f) ->
+                if in do
+                    c = f(first(in))
+                    rec(rest(in) sequence.assoc(out first(c) rest(c)) f)
+                    ;
+                else
+                    out
+                ;
+
+            loop(seq(x) {} f)
+            ;
+        else if t == "sequence" do
+            loop = (in out f) ->
+                if in
+                    rec(rest(in) cons(f(first(in)) out) f)
+                else
+                    out
+                ;
+
+            loop(sequence.rseq(x) nil f)
+            ;
+        else
+            rec(seq(x) f)
+        ;
+
+    reduce = (x f) ->
+        t = type?(x)
+        if t == "vector" do
+            loop = (in i out f) ->
+                if i >= 0 do
+                    rec(in i - 1 f(in(i) out) f)
+                    ;
+                else
+                    out
+                ;
+
+            loop(x sequence.length(x) nil f)
+            ;
+        else if t == "sequence" do
+            loop = (in out f) ->
+                if in
+                    rec(rest(in) f(first(in) out) f)
+                else
+                    out
+                ;
+
+            loop(sequence.rseq(x) nil f)
+            ;
+        else
+            rec(seq(x) f)
+        ;
+
+    filter = (x f) ->
+        t = type?(x)
+        if t == "vector" do
+            loop = (in i out f) ->
+                if i < sequence.length(in) do
+                    v = in(i)
+                    if f(v)
+                        rec(in i + 1 sequence.push(out v) f)
+                    else
+                        rec(in i + 1 out f)
+                    ;
+                else
+                    out
+                ;
+
+            loop(x 0 [] f)
+            ;
+        else if t == "hashmap" do
+            loop = (in out f) ->
+                if in do
+                    v = first(in)
+                    if f(v)
+                        rec(rest(in) sequence.assoc(out first(v) rest(v)) f)
+                    else
+                        rec(rest(in) out f)
+                    ;
+                else
+                    out
+                ;
+
+            loop(seq(x) {} f)
+            ;
+        else if t == "sequence" do
+            loop = (in out f) ->
+                if in do
+                    v = first(in)
+                    if f(v)
+                        rec(rest(in) cons(v out) f)
+                    else
+                        rec(rest(in) out f)
+                    ;
+                else
+                    out
+                ;
+
+            loop(sequence.rseq(x) nil f)
+            ;
+        else
+            rec(seq(x) f)
+        ;
+}
