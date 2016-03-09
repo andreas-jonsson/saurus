@@ -1,5 +1,7 @@
 # About
 
+**This project has been discontinued.**
+
 Saurus is a dynamic, lightweight, general purpose programming language. The VM is written in portable C and can be easily embedded in another C or C++ program. The language is simple, powerful and dynamic in a fashion familiar to most programmers.
 
 ![](https://raw.githubusercontent.com/andreas-t-jonsson/saurus/master/doc/saurus_logo_64.png) [Tweets by @saurus_org](https://twitter.com/saurus_org)
