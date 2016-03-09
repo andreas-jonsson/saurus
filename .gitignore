@@ -1,0 +1,15 @@
+
+build/*
+obj/*
+*.xcodeproj
+*.vcxproj*
+
+*.a
+
+*.make
+
+Makefile
+
+saurus
+
+*.sln
