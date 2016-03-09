@@ -106,7 +106,7 @@ process.async(transfer 2)
 ```
 
 ```
-> saurus fibo.su
+> saurus async.su
 ```
 
 *We recommend using [Atom](https://atom.io/) with the [language-saurus](https://atom.io/packages/language-saurus) package for writing Saurus code.*
