@@ -363,10 +363,10 @@ const char *stringify(su_state *s, value_t *v) {
 		case SU_STRING:
 			return ((string_t*)v->obj.gc_object)->str;
 		case SU_FUNCTION:
-			sprintf(s->scratch_pad, "<function %p>", (void*)v->obj.func);
+			sprintf(s->scratch_pad, "<function %p>", v->obj.func);
 			break;
 		case SU_NATIVEFUNC:
-			sprintf(s->scratch_pad, "<native-function %p>", (void*)v->obj.nfunc);
+			sprintf(s->scratch_pad, "<native-function %p>", v->obj.nfunc);
 			break;
 		case SU_NATIVEPTR:
 			sprintf(s->scratch_pad, "<native-pointer %p>", v->obj.ptr);
@@ -1738,9 +1738,9 @@ void su_close(su_state *s) {
 		memset(thread->string_cache, 0, sizeof(thread->string_cache));
 		if (thread->string_builder) thread->alloc(s->string_builder, 0);
 		
-		if (thread->fstdin != stdin) fclose(thread->fstdin);
-		if (thread->fstdout != stdout) fclose(thread->fstdout);
-		if (thread->fstderr != stderr) fclose(thread->fstderr);
+		if (thread->fstdin && thread->fstdin != stdin) fclose(thread->fstdin);
+		if (thread->fstdout && thread->fstdout != stdout) fclose(thread->fstdout);
+		if (thread->fstderr && thread->fstderr != stderr) fclose(thread->fstderr);
 	}
 	
 	while (atomic_get(&s->msi->num_objects) > 1)

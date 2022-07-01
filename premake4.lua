@@ -21,6 +21,8 @@ function create_project(k)
     includedirs { 'lua', 'src/vm' }
     defines { '_CRT_SECURE_NO_WARNINGS' }
 
+    buildoptions { "-std=c89", "-pedantic" }
+
     if k == 'ConsoleApp' then
         files {
             'src/repl/saurus.c'

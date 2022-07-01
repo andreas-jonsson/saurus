@@ -234,7 +234,7 @@ static INLINE void *atomic_get_ptr(aptr_t *a)
 		if (pthread_attr_init(&type) != 0)
 			return -1;
 		pthread_attr_setdetachstate(&type, PTHREAD_CREATE_DETACHED);
-		if (pthread_create(&handle, &type, (void*)func, data) != 0)
+		if (pthread_create(&handle, &type, (void*(*)(void*))func, data) != 0)
 			return -1;
 		return 0;
 	}
